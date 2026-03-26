@@ -1,3 +1,17 @@
+import os
+# Use Ollama library to interact with model:
+from ollama import chat, ChatResponse, Client
+
+# Get OLLAMA_HOST, if specified, or default to localhost:11434.
+OLLAMA_URL = os.getenv("OLLAMA_HOST", "localhost:11434")
+
+# Initialize the OpenAI client
+client = Client(host=OLLAMA_URL)
+
+# Specify model
+MODEL_NAME = "mistral:7b"
+
+
 def translate_content(content: str) -> tuple[bool, str]:
     if content == "这是一条中文消息":
         return False, "This is a Chinese message"
@@ -32,3 +46,49 @@ def translate_content(content: str) -> tuple[bool, str]:
     if content == "This is an English message":
         return True, "This is an English message"
     return True, content
+
+def query_llm_robust(post: str) -> tuple[bool, str]:
+    if not post or not post.strip():
+        return (True, post)
+
+    context = (
+        "You are a language processing tool. Given a text input, do the following:\n"
+        "1. Determine if the text is in English.\n"
+        "2. If it is NOT English, translate it into English.\n"
+        "3. Respond in EXACTLY this format with no other text:\n"
+        "IS_ENGLISH: True\n"
+        "TRANSLATION: <original text>\n\n"
+        "OR if not English:\n"
+        "IS_ENGLISH: False\n"
+        "TRANSLATION: <English translation>\n\n"
+        "For empty, gibberish, or unintelligible input, treat it as English and return it unchanged."
+    )
+
+    try:
+        response = client.chat(
+            model=MODEL_NAME,
+            messages=[
+                {"role": "system", "content": context},
+                {"role": "user", "content": post}
+            ]
+        )
+        content = response.message.content.strip()
+    except Exception:
+        return (True, post)
+
+    is_english = None
+    translation = None
+
+    for line in content.split("\n"):
+        line = line.strip()
+        if line.upper().startswith("IS_ENGLISH:"):
+            value = line.split(":", 1)[1].strip().lower()
+            if value in ("true", "false"):
+                is_english = value == "true"
+        elif line.upper().startswith("TRANSLATION:"):
+            translation = line.split(":", 1)[1].strip()
+
+    if is_english is None or translation is None:
+        return (True, post)
+
+    return (is_english, translation)
