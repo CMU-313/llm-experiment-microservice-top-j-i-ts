@@ -61,7 +61,10 @@ def query_llm_robust(post: str) -> tuple[bool, str]:
         "OR if not English:\n"
         "IS_ENGLISH: False\n"
         "TRANSLATION: <English translation>\n\n"
-        "For empty, gibberish, or unintelligible input, treat it as English and return it unchanged."
+        "Rules:\n"
+        "- Output ONLY the two lines above. No explanations, no parenthetical notes, no language labels.\n"
+        "- The TRANSLATION value must be the translated text and nothing else.\n"
+        "- For empty, gibberish, or unintelligible input, treat it as English and return it unchanged."
     )
 
     try:
