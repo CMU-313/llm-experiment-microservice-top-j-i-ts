@@ -33,18 +33,18 @@ def test_exception_from_ollama(mocker):
 
 @patch.object(client, 'chat')
 def test_partial_format_missing_translation(mocker):
-    mocker.return_value.message.content = "IS_ENGLISH: False"
+    mocker.return_value.message.content = '{"is_english": false}'
     result = query_llm_robust("Hola amigos")
     assert result == (True, "Hola amigos")
 
 @patch.object(client, 'chat')
 def test_normal_english_input(mocker):
-    mocker.return_value.message.content = "IS_ENGLISH: True\nTRANSLATION: Hello friend"
+    mocker.return_value.message.content = '{"is_english": true, "translation": "Hello friend"}'
     result = query_llm_robust("Hello friend")
     assert result == (True, "Hello friend")
 
 @patch.object(client, 'chat')
 def test_normal_non_english_input(mocker):
-    mocker.return_value.message.content = "IS_ENGLISH: False\nTRANSLATION: Hello friend"
+    mocker.return_value.message.content = '{"is_english": false, "translation": "Hello friend"}'
     result = query_llm_robust("Hola amigo")
     assert result == (False, "Hello friend")

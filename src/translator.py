@@ -1,15 +1,17 @@
 import os
-# Use Ollama library to interact with model:
-from ollama import chat, ChatResponse, Client
+from ollama import Client
+from pydantic import BaseModel
 
-# Get OLLAMA_HOST, if specified, or default to localhost:11434.
 OLLAMA_URL = os.getenv("OLLAMA_HOST", "localhost:11434")
 
-# Initialize the OpenAI client
 client = Client(host=OLLAMA_URL)
 
-# Specify model
 MODEL_NAME = "mistral:7b"
+
+
+class TranslationResponse(BaseModel):
+    is_english: bool
+    translation: str
 
 
 def translate_content(content: str) -> tuple[bool, str]:
@@ -53,15 +55,10 @@ def query_llm_robust(post: str) -> tuple[bool, str]:
 
     context = (
         "You are a language detection and translation tool.\n"
-        "Given an input text, respond with EXACTLY two lines and nothing else:\n\n"
-        "IS_ENGLISH: <True or False — True only if the INPUT text is written in English>\n"
-        "TRANSLATION: <if input is English: the original text unchanged | if input is NOT English: the English translation>\n\n"
-        "IMPORTANT: IS_ENGLISH describes the language of the INPUT text, not the translation.\n"
-        "If the input is German, Spanish, French, or any non-English language, IS_ENGLISH must be False.\n\n"
-        "Rules:\n"
-        "- Output ONLY the two lines above. No explanations, no parenthetical notes, no language labels.\n"
-        "- The TRANSLATION value must be plain translated text and nothing else.\n"
-        "- For empty, gibberish, or unintelligible input, treat it as English and return it unchanged."
+        "Given an input text, determine if it is English and provide a translation.\n"
+        "If the input is English, set is_english to true and return the original text as the translation.\n"
+        "If the input is not English, set is_english to false and provide the English translation.\n"
+        "For empty, gibberish, or unintelligible input, treat it as English and return it unchanged."
     )
 
     try:
@@ -70,25 +67,10 @@ def query_llm_robust(post: str) -> tuple[bool, str]:
             messages=[
                 {"role": "system", "content": context},
                 {"role": "user", "content": post}
-            ]
+            ],
+            format=TranslationResponse.model_json_schema(),
         )
-        content = response.message.content.strip()
+        result = TranslationResponse.model_validate_json(response.message.content)
+        return (result.is_english, result.translation)
     except Exception:
         return (True, post)
-
-    is_english = None
-    translation = None
-
-    for line in content.split("\n"):
-        line = line.strip()
-        if line.upper().startswith("IS_ENGLISH:"):
-            value = line.split(":", 1)[1].strip().lower()
-            if value in ("true", "false"):
-                is_english = value == "true"
-        elif line.upper().startswith("TRANSLATION:"):
-            translation = line.split(":", 1)[1].strip()
-
-    if is_english is None or translation is None:
-        return (True, post)
-
-    return (is_english, translation)
