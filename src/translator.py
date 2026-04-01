@@ -52,18 +52,15 @@ def query_llm_robust(post: str) -> tuple[bool, str]:
         return (True, post)
 
     context = (
-        "You are a language processing tool. Given a text input, do the following:\n"
-        "1. Determine if the text is in English.\n"
-        "2. If it is NOT English, translate it into English.\n"
-        "3. Respond in EXACTLY this format with no other text:\n"
-        "IS_ENGLISH: True\n"
-        "TRANSLATION: <original text>\n\n"
-        "OR if not English:\n"
-        "IS_ENGLISH: False\n"
-        "TRANSLATION: <English translation>\n\n"
+        "You are a language detection and translation tool.\n"
+        "Given an input text, respond with EXACTLY two lines and nothing else:\n\n"
+        "IS_ENGLISH: <True or False — True only if the INPUT text is written in English>\n"
+        "TRANSLATION: <if input is English: the original text unchanged | if input is NOT English: the English translation>\n\n"
+        "IMPORTANT: IS_ENGLISH describes the language of the INPUT text, not the translation.\n"
+        "If the input is German, Spanish, French, or any non-English language, IS_ENGLISH must be False.\n\n"
         "Rules:\n"
         "- Output ONLY the two lines above. No explanations, no parenthetical notes, no language labels.\n"
-        "- The TRANSLATION value must be the translated text and nothing else.\n"
+        "- The TRANSLATION value must be plain translated text and nothing else.\n"
         "- For empty, gibberish, or unintelligible input, treat it as English and return it unchanged."
     )
 
