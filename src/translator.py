@@ -23,7 +23,7 @@ def translate_content(content: str) -> tuple[bool, str]:
         return False, "This is a Spanish message"
     if content == "Esta é uma mensagem em português":
         return False, "This is a Portuguese message"
-    if content  == "これは日本語のメッセージです":
+    if content == "これは日本語のメッセージです":
         return False, "This is a Japanese message"
     if content == "이것은 한국어 메시지입니다":
         return False, "This is a Korean message"
@@ -49,6 +49,7 @@ def translate_content(content: str) -> tuple[bool, str]:
         return True, "This is an English message"
     return True, content
 
+
 def query_llm_robust(post: str) -> tuple[bool, str]:
     if not post or not post.strip():
         return (True, post)
@@ -60,7 +61,8 @@ def query_llm_robust(post: str) -> tuple[bool, str]:
         "- translation: if the input is English, return the original text unchanged; if the input is NOT English, return the English translation.\n\n"
         "IMPORTANT: is_english must describe the language of the INPUT text, not the translation output.\n"
         "If the input is German, Spanish, French, or any non-English language, is_english must be false.\n"
-        "For empty, gibberish, or unintelligible input, treat it as English and return it unchanged."
+        "For empty, gibberish, or unintelligible input, treat it as English and return it unchanged.\n"
+        "In the 'translation' field, you must put ONLY the direct, literal translation. Do not add any prefixes indicating the content was translated"
     )
 
     try:
@@ -68,7 +70,7 @@ def query_llm_robust(post: str) -> tuple[bool, str]:
             model=MODEL_NAME,
             messages=[
                 {"role": "system", "content": context},
-                {"role": "user", "content": post}
+                {"role": "user", "content": post},
             ],
             format=TranslationResponse.model_json_schema(),
         )
